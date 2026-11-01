@@ -14,13 +14,28 @@ npm test
 
 Requires Node.js 22.9+.
 
-## How users are identified (no accounts yet)
+## Accounts & login
 
-The frontend generates a random ID once with `crypto.randomUUID()`, keeps it in `localStorage`, and sends it on every request as an `X-Client-Id` header. Each gallery belongs to that ID, so other people can't list, edit or delete your strips.
+- Users sign up with **name, email and password** (min 8 characters).
+- Passwords are hashed with **scrypt** + a random salt — never stored in plain text.
+- Logging in creates a **server-side session**; the browser gets an `httpOnly`, `SameSite=Lax` cookie (`pb_session`) that JavaScript can't read. Only a SHA-256 hash of the session token is stored in the database. Sessions last 30 days.
+- Login/signup are **rate-limited** (20 attempts / 15 min per IP), and state-changing requests from untrusted origins are rejected.
+- Each photo strip belongs to a user — nobody else can list, edit or delete it.
+
+In development the frontend (Vite) proxies `/api` and `/uploads` to this server, so everything is same-origin and cookies just work.
 
 ## Endpoints
 
-All `/api/strips` routes require the `X-Client-Id` header.
+### Auth
+
+| Method | Path               | Body                        | Description |
+|--------|--------------------|-----------------------------|-------------|
+| `POST` | `/api/auth/signup` | `{ name, email, password }` | Create account + log in |
+| `POST` | `/api/auth/login`  | `{ email, password }`       | Log in |
+| `POST` | `/api/auth/logout` |                             | Log out |
+| `GET`  | `/api/auth/me`     |                             | Current user (401 if logged out) |
+
+### Photo strips (login required)
 
 | Method   | Path              | Description |
 |----------|-------------------|-------------|
@@ -54,11 +69,8 @@ form.append('title', 'saturday with mia');
 form.append('filter', 'sepia');
 form.append('frameCount', '4');
 
-await fetch('http://localhost:4000/api/strips', {
-  method: 'POST',
-  headers: { 'X-Client-Id': clientId },
-  body: form,
-});
+// the session cookie is sent automatically
+await fetch('/api/strips', { method: 'POST', body: form, credentials: 'include' });
 ```
 
 ## Structure
@@ -70,8 +82,8 @@ server/
 │   ├── app.js              # Express app setup
 │   ├── config.js           # env config
 │   ├── db.js               # SQLite connection + schema
-│   ├── lib/images.js       # image type detection
-│   ├── middleware/         # client ID + error handling
-│   └── routes/strips.js    # gallery endpoints
-└── test/strips.test.js
+│   ├── lib/                # images, passwords, sessions
+│   ├── middleware/         # auth + error handling
+│   └── routes/             # auth.js, strips.js
+└── test/                   # auth + strips tests
 ```

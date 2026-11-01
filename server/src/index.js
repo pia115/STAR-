@@ -9,6 +9,8 @@ const app = createApp({
   uploadDir: config.uploadDir,
   corsOrigins: config.corsOrigins,
   maxUploadBytes: config.maxUploadBytes,
+  cookieSecure: config.cookieSecure,
+  trustProxy: config.trustProxy,
 });
 
 const server = app.listen(config.port, () => {

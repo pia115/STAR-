@@ -18,5 +18,9 @@ export function loadConfig(env = process.env) {
       .map((o) => o.trim())
       .filter(Boolean),
     maxUploadBytes: toInt(env.MAX_UPLOAD_MB, 10) * 1024 * 1024,
+    // Session cookies are only sent over HTTPS in production
+    cookieSecure: env.NODE_ENV === 'production',
+    // Set when running behind a reverse proxy / hosting platform (for correct IPs + HTTPS detection)
+    trustProxy: env.TRUST_PROXY === 'true',
   };
 }

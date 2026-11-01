@@ -1,6 +1,5 @@
 import { test, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -15,13 +14,21 @@ const PNG = Buffer.concat([
 ]);
 const JPEG = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(32)]);
 
-let app, db, uploadDir, clientId;
+let app, db, uploadDir, me, other;
 
-beforeEach(() => {
+const signup = async (email) => {
+  const agent = request.agent(app);
+  const res = await agent.post('/api/auth/signup').send({ name: 'Test', email, password: 'password123' });
+  assert.equal(res.status, 201);
+  return agent;
+};
+
+beforeEach(async () => {
   uploadDir = fs.mkdtempSync(path.join(os.tmpdir(), 'photobooth-test-'));
   db = openDatabase(':memory:');
   app = createApp({ db, uploadDir, maxUploadBytes: 1024 });
-  clientId = crypto.randomUUID();
+  me = await signup('me@example.com');
+  other = await signup('other@example.com');
 });
 
 afterEach(() => {
@@ -29,8 +36,8 @@ afterEach(() => {
   fs.rmSync(uploadDir, { recursive: true, force: true });
 });
 
-const createStrip = (fields = {}, file = PNG, id = clientId) => {
-  const req = request(app).post('/api/strips').set('X-Client-Id', id);
+const createStrip = (fields = {}, file = PNG, agent = me) => {
+  const req = agent.post('/api/strips');
   for (const [k, v] of Object.entries(fields)) req.field(k, String(v));
   return req.attach('image', file, 'strip.png');
 };
@@ -41,9 +48,9 @@ test('health check', async () => {
   assert.deepEqual(res.body, { status: 'ok' });
 });
 
-test('rejects requests without a valid client id', async () => {
+test('requires login', async () => {
   assert.equal((await request(app).get('/api/strips')).status, 401);
-  assert.equal((await request(app).get('/api/strips').set('X-Client-Id', 'nope')).status, 401);
+  assert.equal((await request(app).post('/api/strips').attach('image', PNG, 'a.png')).status, 401);
 });
 
 test('creates a strip with metadata and serves the image', async () => {
@@ -77,7 +84,7 @@ test('detects JPEG from bytes', async () => {
 });
 
 test('rejects missing, non-image and oversized files', async () => {
-  const noFile = await request(app).post('/api/strips').set('X-Client-Id', clientId).field('title', 'x');
+  const noFile = await me.post('/api/strips').field('title', 'x');
   assert.equal(noFile.status, 400);
 
   const notImage = await createStrip({}, Buffer.from('<script>alert(1)</script>'));
@@ -94,37 +101,33 @@ test('validates metadata', async () => {
   assert.equal(fs.readdirSync(uploadDir).length, 0);
 });
 
-test('lists only the current client\'s strips, newest first, with pagination', async () => {
+test('lists only the user\'s own strips, newest first, with pagination', async () => {
   await createStrip({ title: 'one' });
   await createStrip({ title: 'two' });
-  await createStrip({ title: 'someone else' }, PNG, crypto.randomUUID());
+  await createStrip({ title: 'someone else' }, PNG, other);
 
-  const res = await request(app).get('/api/strips?limit=1').set('X-Client-Id', clientId);
+  const res = await me.get('/api/strips?limit=1');
   assert.equal(res.status, 200);
   assert.equal(res.body.total, 2);
   assert.equal(res.body.strips.length, 1);
   assert.equal(res.body.strips[0].title, 'two');
 });
 
-test('other clients cannot read, edit or delete a strip', async () => {
+test('other users cannot read, edit or delete a strip', async () => {
   const { body } = await createStrip();
-  const other = crypto.randomUUID();
-  assert.equal((await request(app).get(`/api/strips/${body.id}`).set('X-Client-Id', other)).status, 404);
-  assert.equal((await request(app).patch(`/api/strips/${body.id}`).set('X-Client-Id', other).send({ title: 'x' })).status, 404);
-  assert.equal((await request(app).delete(`/api/strips/${body.id}`).set('X-Client-Id', other)).status, 404);
+  assert.equal((await other.get(`/api/strips/${body.id}`)).status, 404);
+  assert.equal((await other.patch(`/api/strips/${body.id}`).send({ title: 'x' })).status, 404);
+  assert.equal((await other.delete(`/api/strips/${body.id}`)).status, 404);
 });
 
 test('updates title and caption', async () => {
   const { body } = await createStrip({ title: 'old' });
-  const res = await request(app)
-    .patch(`/api/strips/${body.id}`)
-    .set('X-Client-Id', clientId)
-    .send({ title: 'new', caption: 'hello' });
+  const res = await me.patch(`/api/strips/${body.id}`).send({ title: 'new', caption: 'hello' });
   assert.equal(res.status, 200);
   assert.equal(res.body.title, 'new');
   assert.equal(res.body.caption, 'hello');
 
-  const empty = await request(app).patch(`/api/strips/${body.id}`).set('X-Client-Id', clientId).send({ filter: 'x' });
+  const empty = await me.patch(`/api/strips/${body.id}`).send({ filter: 'x' });
   assert.equal(empty.status, 400);
 });
 
@@ -132,8 +135,8 @@ test('deletes a strip and its image file', async () => {
   const { body } = await createStrip();
   assert.equal(fs.readdirSync(uploadDir).length, 1);
 
-  const res = await request(app).delete(`/api/strips/${body.id}`).set('X-Client-Id', clientId);
+  const res = await me.delete(`/api/strips/${body.id}`);
   assert.equal(res.status, 204);
   assert.equal(fs.readdirSync(uploadDir).length, 0);
-  assert.equal((await request(app).get(`/api/strips/${body.id}`).set('X-Client-Id', clientId)).status, 404);
+  assert.equal((await me.get(`/api/strips/${body.id}`)).status, 404);
 });

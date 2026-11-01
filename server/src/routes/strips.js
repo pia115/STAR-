@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import express from 'express';
 import multer from 'multer';
-import { requireClientId } from '../middleware/clientId.js';
+import { requireAuth } from '../middleware/auth.js';
 import { HttpError } from '../middleware/errors.js';
 import { detectImageType } from '../lib/images.js';
 
@@ -92,25 +92,25 @@ export function createStripsRouter({ db, uploadDir, maxUploadBytes }) {
 
   const stmts = {
     insert: db.prepare(`
-      INSERT INTO strips (id, client_id, title, caption, filter, layout, frame_count,
+      INSERT INTO strips (id, user_id, title, caption, filter, layout, frame_count,
                           background_color, image_file, mime_type, size_bytes, taken_at)
-      VALUES (@id, @clientId, @title, @caption, @filter, @layout, @frameCount,
+      VALUES (@id, @userId, @title, @caption, @filter, @layout, @frameCount,
               @backgroundColor, @imageFile, @mimeType, @sizeBytes, @takenAt)
     `),
-    get: db.prepare('SELECT * FROM strips WHERE id = ? AND client_id = ?'),
+    get: db.prepare('SELECT * FROM strips WHERE id = ? AND user_id = ?'),
     list: db.prepare(`
-      SELECT * FROM strips WHERE client_id = ?
+      SELECT * FROM strips WHERE user_id = ?
       ORDER BY created_at DESC, rowid DESC LIMIT ? OFFSET ?
     `),
-    count: db.prepare('SELECT COUNT(*) AS total FROM strips WHERE client_id = ?'),
-    remove: db.prepare('DELETE FROM strips WHERE id = ? AND client_id = ?'),
+    count: db.prepare('SELECT COUNT(*) AS total FROM strips WHERE user_id = ?'),
+    remove: db.prepare('DELETE FROM strips WHERE id = ? AND user_id = ?'),
   };
 
-  router.use(requireClientId);
+  router.use(requireAuth);
 
   const findOwned = (req) => {
     if (!UUID_RE.test(req.params.id)) throw new HttpError(404, 'Strip not found');
-    const row = stmts.get.get(req.params.id, req.clientId);
+    const row = stmts.get.get(req.params.id, req.user.id);
     if (!row) throw new HttpError(404, 'Strip not found');
     return row;
   };
@@ -131,7 +131,7 @@ export function createStripsRouter({ db, uploadDir, maxUploadBytes }) {
     try {
       stmts.insert.run({
         id,
-        clientId: req.clientId,
+        userId: req.user.id,
         title: meta.title ?? null,
         caption: meta.caption ?? null,
         filter: meta.filter ?? null,
@@ -148,15 +148,15 @@ export function createStripsRouter({ db, uploadDir, maxUploadBytes }) {
       throw err;
     }
 
-    res.status(201).json(toDto(stmts.get.get(id, req.clientId)));
+    res.status(201).json(toDto(stmts.get.get(id, req.user.id)));
   });
 
-  // List the current client's strips, newest first
+  // List the logged-in user's strips, newest first
   router.get('/', (req, res) => {
     const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 20, 1), 50);
     const offset = Math.max(Number.parseInt(req.query.offset, 10) || 0, 0);
-    const rows = stmts.list.all(req.clientId, limit, offset);
-    const { total } = stmts.count.get(req.clientId);
+    const rows = stmts.list.all(req.user.id, limit, offset);
+    const { total } = stmts.count.get(req.user.id);
     res.json({ strips: rows.map(toDto), total, limit, offset });
   });
 
@@ -173,15 +173,15 @@ export function createStripsRouter({ db, uploadDir, maxUploadBytes }) {
     if (fields.length === 0) throw new HttpError(400, 'Nothing to update (allowed: title, caption)');
 
     const sets = fields.map((f) => `${f} = @${f}`).join(', ');
-    db.prepare(`UPDATE strips SET ${sets} WHERE id = @id AND client_id = @clientId`)
-      .run({ ...meta, id: row.id, clientId: req.clientId });
+    db.prepare(`UPDATE strips SET ${sets} WHERE id = @id AND user_id = @userId`)
+      .run({ ...meta, id: row.id, userId: req.user.id });
 
-    res.json(toDto(stmts.get.get(row.id, req.clientId)));
+    res.json(toDto(stmts.get.get(row.id, req.user.id)));
   });
 
   router.delete('/:id', async (req, res) => {
     const row = findOwned(req);
-    stmts.remove.run(row.id, req.clientId);
+    stmts.remove.run(row.id, req.user.id);
     await fs.rm(path.join(uploadDir, row.image_file), { force: true });
     res.status(204).end();
   });

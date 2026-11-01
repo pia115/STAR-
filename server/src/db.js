@@ -3,9 +3,28 @@ import path from 'node:path';
 import Database from 'better-sqlite3';
 
 const SCHEMA = `
+  CREATE TABLE IF NOT EXISTS users (
+    id            TEXT PRIMARY KEY,
+    email         TEXT NOT NULL UNIQUE COLLATE NOCASE,
+    name          TEXT NOT NULL,
+    password_hash TEXT NOT NULL,
+    created_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+  );
+
+  -- Login sessions. Only a SHA-256 hash of the session token is stored, so a
+  -- leaked database can't be used to hijack sessions.
+  CREATE TABLE IF NOT EXISTS sessions (
+    token_hash TEXT PRIMARY KEY,
+    user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    expires_at TEXT NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions (user_id);
+
   CREATE TABLE IF NOT EXISTS strips (
     id               TEXT PRIMARY KEY,
-    client_id        TEXT NOT NULL,
+    user_id          TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     title            TEXT,
     caption          TEXT,
     filter           TEXT,
@@ -19,8 +38,8 @@ const SCHEMA = `
     created_at       TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
   );
 
-  CREATE INDEX IF NOT EXISTS idx_strips_client_created
-    ON strips (client_id, created_at DESC);
+  CREATE INDEX IF NOT EXISTS idx_strips_user_created
+    ON strips (user_id, created_at DESC);
 `;
 
 /**
