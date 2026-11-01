@@ -1,0 +1,6 @@
+node_modules/
+.env
+.DS_Store
+
+# Local data (SQLite database + uploaded photo strips)
+server/data/
