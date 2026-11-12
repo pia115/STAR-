@@ -101,7 +101,8 @@ The fun part: using the Canvas API to manipulate actual image pixels and build o
 ## 🗺️ Roadmap
 
 - [x] Project setup
-- [x] Backend: memory gallery API (save / list / edit / delete strips) — see [`server/`](server/README.md)
+- [x] Backend: memory gallery API + signup/login with sessions — see [`server/`](server/README.md)
+- [x] Frontend: vintage signup/login + memory gallery UI (`client/`)
 - [ ] Backend: shareable links, music integration
 - [ ] Photo booth: webcam capture + upload + countdown
 - [ ] Vintage filter engine (Canvas)
