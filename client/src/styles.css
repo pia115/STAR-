@@ -154,7 +154,7 @@ body {
 
 .booth-option-btn {
   width: 235px;
-  padding: 0.52rem 1.1rem;
+  padding: 0.42rem 0.9rem;
   border-radius: 3px;
   border: 2px solid var(--espresso);
   background: var(--cream-card);
@@ -173,7 +173,7 @@ body {
 }
 
 .booth-option-btn__handwritten {
-  height: 36px;
+  height: 44px;
   width: auto;
   max-width: 100%;
   object-fit: contain;
