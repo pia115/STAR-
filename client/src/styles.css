@@ -171,32 +171,36 @@ body {
 .camera-page {
   min-height: 100vh;
   width: 100%;
-  max-width: 1060px;
+  max-width: 1120px;
   margin: 0 auto;
-  padding: 1.4rem 1.75rem 3rem;
+  padding: 1.1rem 1rem 2.8rem;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
 .camera-topbar {
+  position: relative;
   width: 100%;
-  max-width: 840px;
-  display: grid;
-  grid-template-columns: 110px 1fr 110px;
+  max-width: 920px;
+  display: flex;
   align-items: center;
-  margin-bottom: 0.9rem;
+  justify-content: center;
+  min-height: 44px;
+  margin-bottom: 0.85rem;
 }
 
 .back-pill {
-  justify-self: start;
-  padding: 0.42rem 1rem;
+  position: absolute;
+  left: 0;
+  padding: 0.38rem 0.9rem;
   border-radius: 999px;
   border: 1.5px solid #c9bc93;
   background: #fdf9e7;
   color: #4a3b2c;
   font-family: 'Lora', Georgia, serif;
-  font-size: 0.88rem;
+  font-size: 0.84rem;
+  white-space: nowrap;
   cursor: pointer;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
   transition: background 0.15s, transform 0.1s;
@@ -212,9 +216,14 @@ body {
   text-align: center;
   font-family: var(--serif-cute);
   font-weight: 500;
-  font-size: clamp(1.6rem, 2.8vw, 2.15rem);
+  font-size: clamp(1.45rem, 2.8vw, 2.15rem);
   letter-spacing: 0.03em;
+  white-space: nowrap;
   color: var(--rose-pink);
+}
+
+.camera-topbar__spacer {
+  display: none;
 }
 
 .camera-stage {
@@ -238,12 +247,12 @@ body {
 }
 
 .camera-viewport--landscape {
-  max-width: 840px;
-  aspect-ratio: 4 / 3;
+  max-width: 920px;
+  aspect-ratio: 16 / 10;
 }
 
 .camera-viewport--portrait {
-  max-width: 500px;
+  max-width: 540px;
   aspect-ratio: 3 / 4;
 }
 
