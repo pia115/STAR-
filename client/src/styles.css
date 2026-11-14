@@ -53,26 +53,26 @@ body {
 }
 
 .sketch-flower--top-right {
-  top: 8px;
-  right: 18px;
-  width: clamp(200px, 23vw, 310px);
+  top: -8px;
+  right: -8px;
+  width: clamp(135px, 19vw, 265px);
 }
 
 .sketch-flower--bottom-left {
-  bottom: 8px;
-  left: 16px;
-  width: clamp(150px, 17vw, 225px);
+  bottom: -8px;
+  left: -8px;
+  width: clamp(115px, 15vw, 205px);
 }
 
 .landing__content {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 900px;
+  max-width: 880px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   align-items: center;
-  gap: clamp(2rem, 5vw, 4.5rem);
+  gap: clamp(1.25rem, 4.5vw, 4.5rem);
 }
 
 /* Left Column: Vertical B - [User's exact camera sketch as OO] - T - H */
@@ -533,7 +533,7 @@ body {
   text-decoration: underline;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 460px) {
   .landing__content {
     grid-template-columns: 1fr;
     text-align: center;
