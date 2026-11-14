@@ -2,12 +2,9 @@
   --butter-bg: #faefb8;
   --butter-light: #fef7cb;
   --butter-stripe: rgba(224, 202, 132, 0.36);
-  --camera-pink: #df8bc0;
-  --camera-pink-glow: rgba(223, 139, 192, 0.22);
-  --flower-blue: #7ab3ea;
-  --rose: #cf7d95;
-  --rose-dark: #b35e78;
-  --cream-card: #fffdf4;
+  --rose-pink: #df7ea7;
+  --rose-badge: #8d5c6c;
+  --cream-card: #fffdf5;
   --espresso: #26171a;
   --burgundy: #54232e;
   --serif-tall: 'Cormorant Garamond', 'DM Serif Display', Georgia, serif;
@@ -25,14 +22,13 @@ body {
   padding: 0;
   min-height: 100vh;
   background-color: var(--butter-bg);
-  /* Warm butter-yellow vintage wallpaper stripes inspired by screenshot 1 */
   background-image:
     repeating-linear-gradient(
       90deg,
       transparent 0px,
-      transparent 44px,
-      var(--butter-stripe) 44px,
-      var(--butter-stripe) 54px
+      transparent 46px,
+      var(--butter-stripe) 46px,
+      var(--butter-stripe) 56px
     ),
     radial-gradient(circle at 50% 45%, var(--butter-light) 0%, var(--butter-bg) 100%);
   color: var(--espresso);
@@ -40,11 +36,9 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-.handwritten {
-  font-family: var(--handwritten);
-}
-
-/* First Page / Landing Layout */
+/* ==========================================================================
+   1. LANDING PAGE (/)
+   ========================================================================== */
 .landing {
   min-height: 100vh;
   width: 100%;
@@ -53,229 +47,502 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2.5rem 3rem;
+  padding: 2rem 3rem;
 }
 
-/* Sketch flower & star decorations in the background */
-.bg-flower {
+/* Exact user sketch flower graphics in top-right and bottom-left corners */
+.sketch-flower {
   position: absolute;
-  color: var(--flower-blue);
   pointer-events: none;
   user-select: none;
   z-index: 0;
-  filter: drop-shadow(0 4px 10px rgba(122, 179, 234, 0.14));
+  height: auto;
 }
 
-.bg-flower--top-right {
-  top: -12px;
+.sketch-flower--top-right {
+  top: 6px;
   right: 18px;
-  width: clamp(210px, 24vw, 320px);
-  animation: gentle-sway 7s ease-in-out infinite alternate;
+  width: clamp(190px, 22vw, 290px);
 }
 
-.bg-flower--bottom-left {
-  bottom: -14px;
+.sketch-flower--bottom-left {
+  bottom: 6px;
   left: 16px;
-  width: clamp(165px, 18vw, 240px);
-  transform: rotate(-8deg);
-  animation: gentle-sway 8s ease-in-out infinite alternate-reverse;
+  width: clamp(145px, 16vw, 210px);
 }
 
-.bg-flower--top-left-mini {
-  top: 28px;
-  left: 46%;
-  width: 86px;
-  opacity: 0.45;
-  transform: rotate(18deg);
-}
-
-.bg-flower--bottom-right-mini {
-  bottom: 26px;
-  right: 14%;
-  width: 96px;
-  opacity: 0.5;
-  transform: rotate(-22deg);
-}
-
-.bg-star {
-  position: absolute;
-  color: var(--flower-blue);
-  opacity: 0.72;
-  pointer-events: none;
-  user-select: none;
-  z-index: 0;
-  animation: twinkle-float 4s ease-in-out infinite alternate;
-}
-
-.bg-star--pink {
-  color: var(--camera-pink);
-  opacity: 0.78;
-}
-
-@keyframes gentle-sway {
-  from {
-    transform: translateY(0) rotate(-3deg);
-  }
-  to {
-    transform: translateY(-8px) rotate(4deg);
-  }
-}
-
-@keyframes twinkle-float {
-  from {
-    transform: translateY(0) scale(0.92) rotate(-8deg);
-    opacity: 0.55;
-  }
-  to {
-    transform: translateY(-6px) scale(1.08) rotate(8deg);
-    opacity: 0.9;
-  }
-}
-
-/* Main two-column stage: Left = BOOTH + Camera, Right = Two Option Buttons */
 .landing__content {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 1020px;
+  max-width: 900px;
   display: grid;
-  grid-template-columns: 1fr 1.15fr;
+  grid-template-columns: 1fr 1fr;
   align-items: center;
-  gap: clamp(2.5rem, 6vw, 5.5rem);
+  gap: clamp(2rem, 5vw, 4.5rem);
 }
 
-/* Left Column: Vertical B - [Camera as OO] - T - H */
+/* Left Column: Vertical B - [User's exact camera sketch as OO] - T - H */
 .booth-logo {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.15rem;
   user-select: none;
 }
 
 .booth-logo__letter {
   font-family: var(--serif-tall);
   font-weight: 600;
-  font-size: clamp(3.6rem, 6.2vw, 5.2rem);
-  line-height: 0.92;
+  font-size: clamp(3.3rem, 5.5vw, 4.6rem);
+  line-height: 0.88;
   color: var(--espresso);
   display: inline-block;
-  transform: scaleX(0.82);
-  letter-spacing: 0.02em;
-  text-shadow: 0 2px 0 rgba(255, 255, 255, 0.6);
+  transform: scaleX(0.8);
+}
+
+/* Bring "B" lower and closer to the camera so it sits right near the top lens "O" */
+.booth-logo__letter--b {
+  margin-bottom: -14px;
+  position: relative;
+  z-index: 2;
+}
+
+.booth-logo__letter--t {
+  margin-top: -6px;
+}
+
+.booth-logo__letter--h {
+  margin-top: 4px;
 }
 
 .booth-logo__camera-wrap {
-  margin: 0.25rem 0 0.35rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  filter: drop-shadow(0 6px 14px var(--camera-pink-glow));
-  transition: transform 0.25s ease;
 }
 
-.booth-logo__camera-wrap:hover {
-  transform: scale(1.04) rotate(-1.5deg);
-}
-
-.booth-logo__camera {
-  width: clamp(190px, 24vw, 275px);
+.booth-logo__camera-img {
+  width: clamp(185px, 22vw, 255px);
   height: auto;
-  color: var(--camera-pink);
+  display: block;
 }
 
-/* Right Column: Two Option Buttons ("take a photo!" and "upload photos") */
+/* Right Column: Smaller, clean option buttons without emojis */
 .landing__actions {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  gap: 1.85rem;
+  gap: 1.15rem;
 }
 
 .booth-option-btn {
-  position: relative;
-  width: min(100%, 410px);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  padding: 1.05rem 2.2rem 1.15rem;
+  width: 240px;
+  padding: 0.62rem 1.4rem 0.68rem;
   border-radius: 999px;
-  border: 2.5px solid var(--espresso);
-  font-family: var(--handwritten);
-  font-size: clamp(2.1rem, 3.4vw, 2.75rem);
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  line-height: 1;
-  cursor: pointer;
-  transition:
-    transform 0.12s ease,
-    box-shadow 0.12s ease,
-    background-color 0.15s ease;
-}
-
-.booth-option-btn--primary {
+  border: 2px solid var(--espresso);
   background: var(--cream-card);
   color: var(--espresso);
-  box-shadow:
-    0 6px 0 var(--espresso),
-    0 12px 24px rgba(38, 23, 26, 0.1);
+  font-family: var(--handwritten);
+  font-size: 1.65rem;
+  font-weight: 700;
+  line-height: 1.1;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 4px 0 var(--espresso);
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.15s ease;
 }
 
-.booth-option-btn--primary:hover {
-  background: #fff9e6;
-  transform: translateY(-2px) rotate(-0.6deg);
-  box-shadow:
-    0 8px 0 var(--espresso),
-    0 16px 28px rgba(38, 23, 26, 0.14);
-}
-
-.booth-option-btn--secondary {
-  background: #f9d8e6;
-  color: var(--espresso);
-  box-shadow:
-    0 6px 0 var(--espresso),
-    0 12px 24px rgba(38, 23, 26, 0.1);
-}
-
-.booth-option-btn--secondary:hover {
-  background: #f5c8dc;
-  transform: translateY(-2px) rotate(0.6deg);
-  box-shadow:
-    0 8px 0 var(--espresso),
-    0 16px 28px rgba(38, 23, 26, 0.14);
+.booth-option-btn:hover {
+  background: #fff6dc;
+  transform: translateY(-1.5px);
+  box-shadow: 0 5.5px 0 var(--espresso);
 }
 
 .booth-option-btn:active {
-  transform: translateY(4px);
-  box-shadow: 0 2px 0 var(--espresso);
+  transform: translateY(2.5px);
+  box-shadow: 0 1.5px 0 var(--espresso);
 }
 
-.booth-option-btn__sparkle {
-  font-size: 1.45rem;
-  color: var(--rose-dark);
+/* ==========================================================================
+   2. CAMERA BOOTH PAGE (/booth) — Inspired by reference screenshot
+   ========================================================================== */
+.camera-page {
+  min-height: 100vh;
+  width: 100%;
+  max-width: 1060px;
+  margin: 0 auto;
+  padding: 1.4rem 1.75rem 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.landing__status {
-  margin: 0.25rem 0 0 0.5rem;
-  font-size: 1.55rem;
-  color: var(--burgundy);
-  background: rgba(255, 253, 244, 0.85);
-  border: 1.5px dashed var(--rose);
+.camera-topbar {
+  width: 100%;
+  max-width: 840px;
+  display: grid;
+  grid-template-columns: 110px 1fr 110px;
+  align-items: center;
+  margin-bottom: 0.9rem;
+}
+
+.back-pill {
+  justify-self: start;
+  padding: 0.42rem 1rem;
   border-radius: 999px;
-  padding: 0.35rem 1.1rem;
+  border: 1.5px solid #c9bc93;
+  background: #fdf9e7;
+  color: #4a3b2c;
+  font-family: 'Lora', Georgia, serif;
+  font-size: 0.88rem;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: background 0.15s, transform 0.1s;
+}
+
+.back-pill:hover {
+  background: #fffdf4;
+  transform: translateY(-1px);
+}
+
+.camera-title {
+  margin: 0;
+  text-align: center;
+  font-family: var(--serif-cute);
+  font-weight: 500;
+  font-size: clamp(1.6rem, 2.8vw, 2.15rem);
+  letter-spacing: 0.03em;
+  color: var(--rose-pink);
+}
+
+.camera-stage {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Large spread-out vintage camera frame */
+.camera-viewport {
+  position: relative;
+  width: 100%;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #231915;
+  box-shadow:
+    0 16px 38px rgba(45, 31, 20, 0.22),
+    0 0 0 2px rgba(74, 52, 35, 0.25);
+  transition: max-width 0.28s ease, aspect-ratio 0.28s ease;
+}
+
+.camera-viewport--landscape {
+  max-width: 840px;
+  aspect-ratio: 4 / 3;
+}
+
+.camera-viewport--portrait {
+  max-width: 500px;
+  aspect-ratio: 3 / 4;
+}
+
+.camera-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.camera-video--mirrored {
+  transform: scaleX(-1);
+}
+
+.camera-video--hidden {
+  display: none;
+}
+
+/* Live 90s filter look on the camera feed */
+.camera-viewport--color .camera-video {
+  filter: contrast(1.12) saturate(0.88) sepia(0.24) brightness(1.03);
+}
+
+.camera-viewport--bw .camera-video {
+  filter: grayscale(1) sepia(0.34) contrast(1.32) brightness(1.02);
+}
+
+/* Warm 90s optical vignette & subtle analog grain over live feed */
+.camera-viewport__analog-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      circle at 50% 46%,
+      rgba(255, 240, 215, 0.1) 0%,
+      rgba(45, 26, 18, 0.22) 64%,
+      rgba(20, 11, 8, 0.62) 100%
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.015) 0px,
+      rgba(255, 255, 255, 0.015) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+}
+
+.camera-viewport__flash {
+  position: absolute;
+  inset: 0;
+  background: #fffaf0;
+  pointer-events: none;
+  animation: booth-flash 0.26s ease-out forwards;
+}
+
+@keyframes booth-flash {
+  from {
+    opacity: 0.96;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Stitched pink square badge on the right side of the camera viewport */
+.camera-badge {
+  position: absolute;
+  right: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 68px;
+  height: 68px;
+  border-radius: 16px;
+  background: rgba(141, 92, 108, 0.88);
+  border: 2px dashed rgba(255, 230, 238, 0.78);
+  color: #fff9fb;
+  display: grid;
+  place-items: center;
+  font-family: 'Lora', Georgia, serif;
+  font-size: 1.6rem;
+  font-weight: 600;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+  user-select: none;
+}
+
+.camera-badge--counting {
+  background: rgba(217, 114, 152, 0.94);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.camera-note {
+  margin: 0.55rem 0 0;
+  font-size: 0.82rem;
+  color: #6b5744;
+}
+
+/* Bottom Controls Bar */
+.camera-controls {
+  margin-top: 1.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+}
+
+.round-icon-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1.5px solid #cfc29b;
+  background: #fdf9e8;
+  color: #7c5e54;
+  font-size: 1.15rem;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
+  transition: transform 0.1s, background 0.15s;
+}
+
+.round-icon-btn:hover {
+  background: #fffdf5;
+  transform: translateY(-1px);
+}
+
+/* Pink circular clicker / shutter button */
+.clicker-btn {
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  border: 4px solid #fffdf6;
+  background: #e28cb1;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow:
+    0 6px 16px rgba(170, 92, 126, 0.35),
+    0 0 0 1.5px #d47ba1;
+  transition: transform 0.12s ease, background-color 0.15s ease;
+}
+
+.clicker-btn:hover:not(:disabled) {
+  background: #d97ba3;
+  transform: scale(1.05);
+}
+
+.clicker-btn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.clicker-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.clicker-btn__inner {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2.5px solid #fffdf6;
+  background: transparent;
+}
+
+/* Segmented pills for TIMER, MODE, and 90s FILM */
+.control-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.28rem;
+}
+
+.control-group__label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: #7c6b53;
+}
+
+.control-pills {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.control-pill {
+  padding: 0.38rem 0.68rem;
+  border-radius: 8px;
+  border: 1.5px solid #d4c69e;
+  background: #fdf9e8;
+  color: #5b4a39;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.control-pill:hover {
+  background: #fffdf5;
+}
+
+.control-pill--active {
+  background: #e28cb1;
+  border-color: #d1749c;
+  color: #fffdf8;
+}
+
+/* Developed 90s Prints Tray */
+.developed-tray {
+  width: 100%;
+  max-width: 840px;
+  margin-top: 2.2rem;
+  padding-top: 1.4rem;
+  border-top: 2px dashed rgba(124, 107, 83, 0.3);
+}
+
+.developed-tray__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.1rem;
+}
+
+.developed-tray__title {
+  margin: 0;
+  font-family: var(--handwritten);
+  font-size: 1.85rem;
+  color: var(--espresso);
+}
+
+.developed-tray__actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.tray-btn {
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--espresso);
+  background: var(--cream-card);
+  color: var(--espresso);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2.5px 0 var(--espresso);
+}
+
+.tray-btn--primary {
+  background: #e28cb1;
+  color: #fffdf8;
+}
+
+.developed-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.25rem;
+}
+
+.nineties-print {
+  margin: 0;
+  padding: 0.65rem 0.65rem 0.75rem;
+  background: #f4ebd9;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(38, 23, 26, 0.16);
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.nineties-print img {
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+  display: block;
+}
+
+.nineties-print__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.76rem;
+  color: #4c3b2c;
+}
+
+.nineties-print__dl {
+  color: #9e476e;
+  font-weight: 700;
+  text-decoration: underline;
 }
 
 @media (max-width: 720px) {
-  .landing {
-    padding: 2rem 1.25rem;
-  }
-
   .landing__content {
     grid-template-columns: 1fr;
-    gap: 2.25rem;
     text-align: center;
   }
 
