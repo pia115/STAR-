@@ -1,7 +1,14 @@
 import { useNavigate } from 'react-router-dom';
 
-export default function LandingPage() {
+export default function LandingPage({ onTriggerLibraryPicker }) {
   const navigate = useNavigate();
+
+  const handleUploadClick = () => {
+    if (onTriggerLibraryPicker) {
+      onTriggerLibraryPicker();
+    }
+    navigate('/upload');
+  };
 
   return (
     <main className="landing">
@@ -40,7 +47,7 @@ export default function LandingPage() {
           </span>
         </section>
 
-        {/* Right side: Smaller, clean option buttons without emojis */}
+        {/* Right side: Squared option buttons without emojis */}
         <section className="landing__actions" aria-label="Choose how to start">
           <button
             type="button"
@@ -50,13 +57,18 @@ export default function LandingPage() {
             take a photo!
           </button>
 
-          <button
-            type="button"
-            className="booth-option-btn"
-            onClick={() => navigate('/booth?mode=upload')}
-          >
-            upload photos
-          </button>
+          <div className="landing__upload-group">
+            <button
+              type="button"
+              className="booth-option-btn"
+              onClick={handleUploadClick}
+            >
+              upload photos
+            </button>
+            <span className="landing__upload-disclaimer">
+              * max 4 pictures at a time
+            </span>
+          </div>
         </section>
       </div>
     </main>

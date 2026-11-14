@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { renderVintagePhoto } from '../lib/ninetiesFilter.js';
 
+const MAX_PHOTOS = 4;
+
 export default function CameraBoothPage() {
   const navigate = useNavigate();
   const videoRef = useRef(null);
@@ -19,6 +21,8 @@ export default function CameraBoothPage() {
   const [usingFallback, setUsingFallback] = useState(false);
   const [cameraNote, setCameraNote] = useState('');
   const [photos, setPhotos] = useState([]);
+
+  const isFull = photos.length >= MAX_PHOTOS;
 
   // Start laptop webcam on mount
   useEffect(() => {
@@ -148,38 +152,41 @@ export default function CameraBoothPage() {
   }, [usingFallback]);
 
   const snapNow = useCallback(() => {
-    const source = usingFallback ? fallbackCanvasRef.current : videoRef.current;
-    if (!source) return;
+    setPhotos((prev) => {
+      if (prev.length >= MAX_PHOTOS) return prev;
+      const source = usingFallback ? fallbackCanvasRef.current : videoRef.current;
+      if (!source) return prev;
 
-    const sourceWidth = usingFallback ? source.width : source.videoWidth || 1280;
-    const sourceHeight = usingFallback ? source.height : source.videoHeight || 720;
+      const sourceWidth = usingFallback ? source.width : source.videoWidth || 1280;
+      const sourceHeight = usingFallback ? source.height : source.videoHeight || 720;
 
-    setFlashing(true);
-    setTimeout(() => setFlashing(false), 260);
+      setFlashing(true);
+      setTimeout(() => setFlashing(false), 260);
 
-    const dataUrl = renderVintagePhoto({
-      source,
-      sourceWidth,
-      sourceHeight,
-      orientation,
-      colorMode,
-      mirrored,
-    });
-
-    setPhotos((prev) => [
-      {
-        id: `${Date.now()}-${prev.length + 1}`,
-        dataUrl,
+      const dataUrl = renderVintagePhoto({
+        source,
+        sourceWidth,
+        sourceHeight,
         orientation,
         colorMode,
-        shotNumber: prev.length + 1,
-      },
-      ...prev,
-    ]);
+        mirrored,
+      });
+
+      return [
+        ...prev,
+        {
+          id: `${Date.now()}-${prev.length + 1}`,
+          dataUrl,
+          orientation,
+          colorMode,
+          shotNumber: prev.length + 1,
+        },
+      ];
+    });
   }, [usingFallback, orientation, colorMode, mirrored]);
 
   const handleClicker = () => {
-    if (countdown !== null) return;
+    if (countdown !== null || isFull) return;
 
     if (timerSeconds === 0) {
       snapNow();
@@ -202,57 +209,62 @@ export default function CameraBoothPage() {
     }, 1000);
   };
 
-  // Download a vertical photo strip combining up to 4 recent shots
-  const downloadStrip = () => {
-    if (photos.length === 0) return;
-    const slice = photos.slice(0, 4).reverse();
-    const firstImg = new Image();
-    firstImg.src = slice[0].dataUrl;
-    firstImg.onload = () => {
-      const frameW = 480;
-      const frameH = slice[0].orientation === 'portrait' ? 640 : 360;
-      const pad = 28;
-      const bottomPad = 68;
-      const canvas = document.createElement('canvas');
-      canvas.width = frameW + pad * 2;
-      canvas.height = slice.length * (frameH + pad) + pad + bottomPad;
-      const ctx = canvas.getContext('2d');
-
-      ctx.fillStyle = '#f3ead8';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      let loaded = 0;
-      slice.forEach((p, idx) => {
-        const img = new Image();
-        img.onload = () => {
-          const y = pad + idx * (frameH + pad);
-          ctx.drawImage(img, pad, y, frameW, frameH);
-          loaded += 1;
-          if (loaded === slice.length) {
-            ctx.fillStyle = '#3c2a1e';
-            ctx.font = 'italic 26px "Caveat", cursive';
-            ctx.textAlign = 'center';
-            ctx.fillText(
-              new Date().toLocaleDateString('en-US', {
-                month: 'long',
-                day: 'numeric',
-                year: 'numeric',
-              }),
-              canvas.width / 2,
-              canvas.height - 26,
-            );
-            const a = document.createElement('a');
-            a.href = canvas.toDataURL('image/jpeg', 0.94);
-            a.download = `booth-strip-${Date.now()}.jpg`;
-            a.click();
-          }
-        };
-        img.src = p.dataUrl;
-      });
-    };
+  const removePhoto = (id) => {
+    setPhotos((prev) =>
+      prev
+        .filter((p) => p.id !== id)
+        .map((p, idx) => ({ ...p, shotNumber: idx + 1 })),
+    );
   };
 
-  const badgeValue = countdown !== null ? countdown : photos.length + 1;
+  // Download a vertical photo strip combining up to 4 shots
+  const downloadStrip = () => {
+    if (photos.length === 0) return;
+    const slice = photos.slice(0, MAX_PHOTOS);
+    const frameW = 480;
+    const frameH = slice[0].orientation === 'portrait' ? 640 : 360;
+    const pad = 28;
+    const bottomPad = 68;
+    const canvas = document.createElement('canvas');
+    canvas.width = frameW + pad * 2;
+    canvas.height = slice.length * (frameH + pad) + pad + bottomPad;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#f3ead8';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    let loaded = 0;
+    slice.forEach((p, idx) => {
+      const img = new Image();
+      img.onload = () => {
+        const y = pad + idx * (frameH + pad);
+        ctx.drawImage(img, pad, y, frameW, frameH);
+        loaded += 1;
+        if (loaded === slice.length) {
+          ctx.fillStyle = '#3c2a1e';
+          ctx.font = 'italic 26px "Caveat", cursive';
+          ctx.textAlign = 'center';
+          ctx.fillText(
+            new Date().toLocaleDateString('en-US', {
+              month: 'long',
+              day: 'numeric',
+              year: 'numeric',
+            }),
+            canvas.width / 2,
+            canvas.height - 26,
+          );
+          const a = document.createElement('a');
+          a.href = canvas.toDataURL('image/jpeg', 0.94);
+          a.download = `booth-strip-${Date.now()}.jpg`;
+          a.click();
+        }
+      };
+      img.src = p.dataUrl;
+    });
+  };
+
+  const badgeValue =
+    countdown !== null ? countdown : `${Math.min(photos.length + (isFull ? 0 : 1), MAX_PHOTOS)}/${MAX_PHOTOS}`;
 
   return (
     <main className="camera-page">
@@ -261,7 +273,7 @@ export default function CameraBoothPage() {
         <button type="button" className="back-pill" onClick={() => navigate('/')}>
           ← Back
         </button>
-        <h1 className="camera-title">Strike a Pose</h1>
+        <h1 className="camera-title">hey beautiful</h1>
         <div className="camera-topbar__spacer" />
       </header>
 
@@ -297,13 +309,19 @@ export default function CameraBoothPage() {
           <div
             className={`camera-badge ${countdown !== null ? 'camera-badge--counting' : ''}`}
             aria-live="polite"
-            title={countdown !== null ? 'Countdown' : 'Shot number'}
+            title={countdown !== null ? 'Countdown' : 'Shot count (max 4)'}
           >
             {badgeValue}
           </div>
         </div>
 
-        {cameraNote && <p className="camera-note">{cameraNote}</p>}
+        {isFull ? (
+          <p className="camera-limit-banner" role="status">
+            4 / 4 photos taken! Download your strip below, or remove a photo to take another.
+          </p>
+        ) : (
+          cameraNote && <p className="camera-note">{cameraNote}</p>
+        )}
 
         {/* Bottom Controls Bar */}
         <div className="camera-controls">
@@ -365,9 +383,9 @@ export default function CameraBoothPage() {
             type="button"
             className="clicker-btn"
             onClick={handleClicker}
-            disabled={!cameraReady || countdown !== null}
-            aria-label="Take photo"
-            title="Click to take photo"
+            disabled={!cameraReady || countdown !== null || isFull}
+            aria-label={isFull ? 'Maximum 4 photos reached' : 'Take photo'}
+            title={isFull ? 'Max 4 photos reached' : 'Click to take photo'}
           >
             <span className="clicker-btn__inner" />
           </button>
@@ -400,7 +418,7 @@ export default function CameraBoothPage() {
         <section className="developed-tray" aria-label="Captured photos">
           <div className="developed-tray__header">
             <h2 className="developed-tray__title">
-              developed prints ({photos.length})
+              developed prints ({photos.length} / {MAX_PHOTOS})
             </h2>
             <div className="developed-tray__actions">
               <button type="button" className="tray-btn tray-btn--primary" onClick={downloadStrip}>
@@ -428,13 +446,22 @@ export default function CameraBoothPage() {
                     #{photo.shotNumber} · {photo.colorMode === 'bw' ? 'b&w' : 'colour'} ·{' '}
                     {photo.orientation}
                   </span>
-                  <a
-                    href={photo.dataUrl}
-                    download={`booth-shot-${photo.shotNumber}.jpg`}
-                    className="vintage-print__dl"
-                  >
-                    save jpg
-                  </a>
+                  <div className="vintage-print__links">
+                    <a
+                      href={photo.dataUrl}
+                      download={`booth-shot-${photo.shotNumber}.jpg`}
+                      className="vintage-print__dl"
+                    >
+                      save jpg
+                    </a>
+                    <button
+                      type="button"
+                      className="vintage-print__remove"
+                      onClick={() => removePhoto(photo.id)}
+                    >
+                      remove
+                    </button>
+                  </div>
                 </figcaption>
               </figure>
             ))}
