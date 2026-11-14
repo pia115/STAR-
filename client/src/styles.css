@@ -20,10 +20,7 @@ body {
   padding: 0;
   min-height: 100vh;
   background-color: #000000;
-  /* Subtle wavy yellow horizontal lines on a fully black background */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='56' viewBox='0 0 640 56'%3E%3Cpath d='M0 28 Q 160 25.5, 320 28.5 T 640 27.5' fill='none' stroke='%23fef3a6' stroke-width='1.5' stroke-opacity='0.36'/%3E%3C/svg%3E");
-  background-size: 640px 56px;
-  background-repeat: repeat;
+  background-image: none;
   color: #ffffff;
   font-family: var(--serif-cute);
   -webkit-font-smoothing: antialiased;
