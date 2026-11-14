@@ -11,6 +11,7 @@ const app = createApp({
   maxUploadBytes: config.maxUploadBytes,
   cookieSecure: config.cookieSecure,
   trustProxy: config.trustProxy,
+  spotify: config.spotify,
 });
 
 const server = app.listen(config.port, () => {

@@ -22,5 +22,9 @@ export function loadConfig(env = process.env) {
     cookieSecure: env.NODE_ENV === 'production',
     // Set when running behind a reverse proxy / hosting platform (for correct IPs + HTTPS detection)
     trustProxy: env.TRUST_PROXY === 'true',
+    spotify: {
+      clientId: env.SPOTIFY_CLIENT_ID?.trim() || '',
+      clientSecret: env.SPOTIFY_CLIENT_SECRET?.trim() || '',
+    },
   };
 }

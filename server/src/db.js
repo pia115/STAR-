@@ -31,6 +31,12 @@ const SCHEMA = `
     layout           TEXT,
     frame_count      INTEGER,
     background_color TEXT,
+    border_style     TEXT,
+    date_stamp       TEXT,
+    stickers_json    TEXT NOT NULL DEFAULT '[]',
+    song_json        TEXT,
+    is_favorite      INTEGER NOT NULL DEFAULT 0,
+    share_token      TEXT,
     image_file       TEXT NOT NULL,
     mime_type        TEXT NOT NULL,
     size_bytes       INTEGER NOT NULL,
@@ -42,8 +48,32 @@ const SCHEMA = `
     ON strips (user_id, created_at DESC);
 `;
 
+const STRIP_MIGRATIONS = [
+  ['border_style', 'TEXT'],
+  ['date_stamp', 'TEXT'],
+  ['stickers_json', "TEXT NOT NULL DEFAULT '[]'"],
+  ['song_json', 'TEXT'],
+  ['is_favorite', 'INTEGER NOT NULL DEFAULT 0'],
+  ['share_token', 'TEXT'],
+];
+
+function migrateStripsTable(db) {
+  const cols = new Set(
+    db.prepare('PRAGMA table_info(strips)').all().map((c) => c.name),
+  );
+  for (const [col, def] of STRIP_MIGRATIONS) {
+    if (!cols.has(col)) {
+      db.exec(`ALTER TABLE strips ADD COLUMN ${col} ${def}`);
+    }
+  }
+  db.exec(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_strips_share_token
+      ON strips (share_token) WHERE share_token IS NOT NULL;
+  `);
+}
+
 /**
- * Opens (or creates) the SQLite database and applies the schema.
+ * Opens (or creates) the SQLite database and applies the schema + migrations.
  * Pass ':memory:' for an in-memory database (used in tests).
  */
 export function openDatabase(dbPath) {
@@ -54,5 +84,6 @@ export function openDatabase(dbPath) {
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
   db.exec(SCHEMA);
+  migrateStripsTable(db);
   return db;
 }

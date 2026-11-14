@@ -127,7 +127,7 @@ test('updates title and caption', async () => {
   assert.equal(res.body.title, 'new');
   assert.equal(res.body.caption, 'hello');
 
-  const empty = await me.patch(`/api/strips/${body.id}`).send({ filter: 'x' });
+  const empty = await me.patch(`/api/strips/${body.id}`).send({ frameCount: 4 });
   assert.equal(empty.status, 400);
 });
 
