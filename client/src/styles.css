@@ -19,12 +19,12 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
-  background-color: var(--butter-bg);
-  /* Subtle wavy bluish horizontal lines on soft butter-yellow paper (like user's reference) */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='56' viewBox='0 0 640 56'%3E%3Cpath d='M0 28 Q 160 25.5, 320 28.5 T 640 27.5' fill='none' stroke='%236c8ead' stroke-width='1.5' stroke-opacity='0.34'/%3E%3C/svg%3E");
+  background-color: #000000;
+  /* Subtle wavy yellow horizontal lines on a fully black background */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='56' viewBox='0 0 640 56'%3E%3Cpath d='M0 28 Q 160 25.5, 320 28.5 T 640 27.5' fill='none' stroke='%23fef3a6' stroke-width='1.5' stroke-opacity='0.36'/%3E%3C/svg%3E");
   background-size: 640px 56px;
   background-repeat: repeat;
-  color: var(--espresso);
+  color: #ffffff;
   font-family: var(--serif-cute);
   -webkit-font-smoothing: antialiased;
 }
@@ -64,15 +64,37 @@ body {
   width: clamp(115px, 15vw, 205px);
 }
 
+/* Idea #2: Hand-drawn notebook/booth frame around the center */
+.landing__sketch-frame {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 820px;
+  padding: clamp(2rem, 4.5vw, 3.4rem) clamp(1.75rem, 4.5vw, 3.8rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.landing__sketch-frame-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  filter: drop-shadow(0 6px 22px rgba(0, 0, 0, 0.55));
+}
+
 .landing__content {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 880px;
+  max-width: 760px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   align-items: center;
-  gap: clamp(1.25rem, 4.5vw, 4.5rem);
+  gap: clamp(1.25rem, 4vw, 3.5rem);
 }
 
 /* Left Column: Vertical B - [User's exact camera sketch as OO] - T - H */
@@ -89,7 +111,7 @@ body {
   font-weight: 600;
   font-size: clamp(3.3rem, 5.5vw, 4.6rem);
   line-height: 0.88;
-  color: var(--espresso);
+  color: #ffffff;
   display: inline-block;
   transform: scaleX(0.8);
 }
@@ -131,8 +153,8 @@ body {
 }
 
 .booth-option-btn {
-  width: 230px;
-  padding: 0.55rem 1.25rem 0.62rem;
+  width: 235px;
+  padding: 0.52rem 1.1rem;
   border-radius: 3px;
   border: 2px solid var(--espresso);
   background: var(--cream-card);
@@ -142,20 +164,33 @@ body {
   font-weight: 700;
   line-height: 1.1;
   text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  box-shadow: 3px 3px 0 var(--espresso);
+  box-shadow: 3px 3px 0 #fef3a6;
   transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.15s ease;
+}
+
+.booth-option-btn__handwritten {
+  height: 36px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
+  user-select: none;
 }
 
 .booth-option-btn:hover {
   background: #fff9e2;
   transform: translate(-1px, -1px);
-  box-shadow: 4px 4px 0 var(--espresso);
+  box-shadow: 4px 4px 0 #fef3a6;
 }
 
 .booth-option-btn:active {
   transform: translate(2px, 2px);
-  box-shadow: 1px 1px 0 var(--espresso);
+  box-shadow: 1px 1px 0 #fef3a6;
 }
 
 /* ==========================================================================
@@ -213,7 +248,7 @@ body {
   font-size: clamp(1.45rem, 2.8vw, 2.15rem);
   letter-spacing: 0.03em;
   white-space: nowrap;
-  color: var(--rose-pink);
+  color: #ffffff;
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -342,7 +377,7 @@ body {
 .camera-note {
   margin: 0.55rem 0 0;
   font-size: 0.82rem;
-  color: #6b5744;
+  color: #ffffff;
 }
 
 /* Bottom Controls Bar */
@@ -451,7 +486,7 @@ body {
   font-size: 0.68rem;
   font-weight: 600;
   letter-spacing: 0.1em;
-  color: #7c6b53;
+  color: #ffffff;
 }
 
 .control-pills {
@@ -489,7 +524,7 @@ body {
   max-width: 840px;
   margin-top: 2.2rem;
   padding-top: 1.4rem;
-  border-top: 2px dashed rgba(124, 107, 83, 0.3);
+  border-top: 2px dashed rgba(255, 255, 255, 0.35);
 }
 
 .developed-tray__header {
@@ -505,7 +540,7 @@ body {
   margin: 0;
   font-family: var(--handwritten);
   font-size: 1.85rem;
-  color: var(--espresso);
+  color: #ffffff;
 }
 
 .developed-tray__actions {
@@ -634,13 +669,13 @@ body {
 .upload-privacy-note {
   margin: 0 0 0.85rem;
   font-family: 'Lora', Georgia, serif;
-  font-size: 0.82rem;
-  color: #5c4b3b;
+  font-size: 0.85rem;
+  color: #ffffff;
   text-align: center;
-  background: rgba(255, 254, 247, 0.82);
+  background: rgba(255, 255, 255, 0.08);
   padding: 0.38rem 0.9rem;
   border-radius: 4px;
-  border: 1px solid #dfd3ad;
+  border: 1px solid rgba(255, 255, 255, 0.35);
 }
 
 .upload-disclaimer-alert {
@@ -782,7 +817,7 @@ body {
   margin: 0;
   font-family: var(--handwritten);
   font-size: 1.75rem;
-  color: #6e3f19;
+  color: #ffffff;
   display: flex;
   align-items: center;
   gap: 0.45rem;
