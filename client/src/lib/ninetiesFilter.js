@@ -1,9 +1,11 @@
 /**
- * Renders a video frame (or image) onto a canvas with an authentic 90s
- * analog photobooth look ("bw" = warm silver-gelatin sepia/B&W like classic
- * curtain photobooths; "color" = warm 90s flash disposable film).
+ * Renders a video frame (or image) onto a canvas with a vintage photobooth look:
+ * - "bw": High-contrast, rich warm silver-gelatin B&W (deep velvety blacks,
+ *         luminous creamy skin highlights, smooth tones with very fine film texture).
+ * - "color": Cute vintage digicam / warm film look (clear, flattering skin tones,
+ *            crisp contrast, subtle warm golden cast, and gentle corner vignette).
  */
-export function renderNinetiesPhoto({
+export function renderVintagePhoto({
   source,
   sourceWidth,
   sourceHeight,
@@ -43,32 +45,30 @@ export function renderNinetiesPhoto({
   ctx.drawImage(source, sx, sy, sw, sh, 0, 0, targetWidth, targetHeight);
   ctx.restore();
 
-  // 2. Soft halation / flash bloom pass (gives that dreamy 90s lens glow)
+  // 2. Subtle highlight glow (very light so faces stay sharp and clear)
   const bloomCanvas = document.createElement('canvas');
-  bloomCanvas.width = Math.round(targetWidth / 4);
-  bloomCanvas.height = Math.round(targetHeight / 4);
+  bloomCanvas.width = Math.round(targetWidth / 3);
+  bloomCanvas.height = Math.round(targetHeight / 3);
   const bctx = bloomCanvas.getContext('2d');
-  bctx.filter = 'blur(6px) contrast(130%)';
+  bctx.filter = 'blur(5px) contrast(125%)';
   bctx.drawImage(canvas, 0, 0, bloomCanvas.width, bloomCanvas.height);
 
   ctx.save();
-  ctx.globalAlpha = 0.24;
-  ctx.globalCompositeOperation = 'screen';
+  ctx.globalAlpha = colorMode === 'bw' ? 0.12 : 0.08;
+  ctx.globalCompositeOperation = 'soft-light';
   ctx.drawImage(bloomCanvas, 0, 0, targetWidth, targetHeight);
   ctx.restore();
 
-  // 3. Per-pixel 90s tone curve, warm silver-gelatin B&W or 90s flash colour, + film grain
+  // 3. Per-pixel tone curve & color grading
   const imgData = ctx.getImageData(0, 0, targetWidth, targetHeight);
   const d = imgData.data;
 
   const cx = targetWidth * 0.5;
-  const cy = targetHeight * 0.46;
+  const cy = targetHeight * 0.48;
   const maxDist = Math.hypot(cx, cy);
 
   for (let y = 0; y < targetHeight; y++) {
     const dy = (y - cy) / maxDist;
-    // Subtle horizontal analog paper texture line
-    const scanline = (y % 3 === 0 ? 2 : 0);
 
     for (let x = 0; x < targetWidth; x++) {
       const idx = (y * targetWidth + x) * 4;
@@ -76,28 +76,25 @@ export function renderNinetiesPhoto({
       let g = d[idx + 1];
       let b = d[idx + 2];
 
-      // Distance from center for direct booth flash + dark edge vignette
       const dx = (x - cx) / maxDist;
       const distSq = dx * dx + dy * dy;
-      const flashBoost = Math.max(0, 1 - distSq * 1.45) * 22;
-      const vignette = Math.max(0.28, 1 - Math.pow(distSq, 0.92) * 0.68);
-
-      r = Math.min(255, r + flashBoost);
-      g = Math.min(255, g + flashBoost * 0.94);
-      b = Math.min(255, b + flashBoost * 0.85);
 
       if (colorMode === 'bw') {
-        // Warm panchromatic luminance
-        let lum = (0.32 * r + 0.56 * g + 0.12 * b) / 255;
+        // High-contrast vintage photobooth B&W (inspired by Pinterest curtain booth strips)
+        const vignette = Math.max(0.38, 1 - Math.pow(distSq, 1.05) * 0.56);
 
-        // Punchy 90s photobooth S-curve contrast with lifted darkroom blacks
-        lum = 1 / (1 + Math.exp(-6.2 * (lum - 0.47)));
+        // Panchromatic luminance (flattering on skin tones)
+        let lum = (0.34 * r + 0.54 * g + 0.12 * b) / 255;
+
+        // Strong S-curve contrast for deep rich blacks and bright creamy highlights
+        lum = 1 / (1 + Math.exp(-7.8 * (lum - 0.46)));
         lum = Math.min(1, Math.max(0, lum * vignette));
 
-        // Map to warm 90s sepia-cream tone (deep espresso-charcoal shadows -> creamy ivory highlights)
-        const shadowR = 24, shadowG = 18, shadowB = 13;
-        const midR = 148, midG = 128, midB = 102;
-        const highR = 247, highG = 238, highB = 216;
+        // Warm silver-gelatin tone mapping:
+        // Deep espresso-black shadows -> warm sepia-taupe midtones -> creamy ivory highlights
+        const shadowR = 12, shadowG = 10, shadowB = 8;
+        const midR = 138, midG = 122, midB = 103;
+        const highR = 250, highG = 244, highB = 230;
 
         if (lum < 0.5) {
           const t = lum * 2;
@@ -110,42 +107,50 @@ export function renderNinetiesPhoto({
           g = midG + (highG - midG) * t;
           b = midB + (highB - midB) * t;
         }
+
+        // Very subtle fine silver grain (never noisy or dusty)
+        const grain = (Math.random() - 0.5) * 5.5;
+        d[idx] = Math.max(0, Math.min(255, r + grain));
+        d[idx + 1] = Math.max(0, Math.min(255, g + grain * 0.95));
+        d[idx + 2] = Math.max(0, Math.min(255, b + grain * 0.9));
       } else {
-        // 90s Colour: warm Kodak-flash tones, slightly muted blues, warm rose/amber highlights
-        const sCurve = (v) => {
+        // Cute vintage digicam / warm film colour:
+        // Clean, crisp contrast, natural warm golden skin tones, subtle vignette
+        const vignette = Math.max(0.68, 1 - Math.pow(distSq, 1.15) * 0.32);
+
+        const contrastCurve = (v) => {
           const n = v / 255;
-          return 255 / (1 + Math.exp(-5.2 * (n - 0.48)));
+          // Gentle crisp digicam S-curve
+          const c = 1 / (1 + Math.exp(-4.6 * (n - 0.49)));
+          const minC = 1 / (1 + Math.exp(4.6 * 0.49));
+          const maxC = 1 / (1 + Math.exp(-4.6 * 0.51));
+          return ((c - minC) / (maxC - minC)) * 255;
         };
-        r = sCurve(r);
-        g = sCurve(g);
-        b = sCurve(b);
 
-        // Warm analog color matrix + lifted dusty-brown shadows
-        const nr = Math.min(255, r * 1.08 + g * 0.05 + 14);
-        const ng = Math.min(255, r * 0.04 + g * 0.96 + 6);
-        const nb = Math.min(255, b * 0.82 + r * 0.04 + 10);
+        r = contrastCurve(r);
+        g = contrastCurve(g);
+        b = contrastCurve(b);
 
-        r = nr * vignette + 18 * (1 - vignette);
-        g = ng * vignette + 11 * (1 - vignette);
-        b = nb * vignette + 10 * (1 - vignette);
+        // Slight saturation boost + warm vintage digicam color balance
+        const avg = 0.299 * r + 0.587 * g + 0.114 * b;
+        r = avg + (r - avg) * 1.08 + 6;
+        g = avg + (g - avg) * 1.04 + 2;
+        b = avg + (b - avg) * 0.94 - 3;
+
+        r *= vignette;
+        g *= vignette;
+        b *= vignette;
+
+        // Barely-there digicam sensor texture
+        const grain = (Math.random() - 0.5) * 3.5;
+        d[idx] = Math.max(0, Math.min(255, r + grain));
+        d[idx + 1] = Math.max(0, Math.min(255, g + grain));
+        d[idx + 2] = Math.max(0, Math.min(255, b + grain));
       }
-
-      // Organic 90s film grain
-      const grain = (Math.random() - 0.5) * 26 + scanline;
-      d[idx] = Math.max(0, Math.min(255, r + grain));
-      d[idx + 1] = Math.max(0, Math.min(255, g + grain * 0.92));
-      d[idx + 2] = Math.max(0, Math.min(255, b + grain * 0.84));
     }
   }
 
   ctx.putImageData(imgData, 0, 0);
 
-  // 4. Subtle worn darkroom inner border
-  ctx.save();
-  ctx.strokeStyle = 'rgba(26, 18, 13, 0.55)';
-  ctx.lineWidth = 6;
-  ctx.strokeRect(3, 3, targetWidth - 6, targetHeight - 6);
-  ctx.restore();
-
-  return canvas.toDataURL('image/jpeg', 0.92);
+  return canvas.toDataURL('image/jpeg', 0.94);
 }

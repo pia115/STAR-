@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { renderNinetiesPhoto } from '../lib/ninetiesFilter.js';
+import { renderVintagePhoto } from '../lib/ninetiesFilter.js';
 
 export default function CameraBoothPage() {
   const navigate = useNavigate();
@@ -87,7 +87,6 @@ export default function CameraBoothPage() {
     const draw = (time) => {
       const w = canvas.width;
       const h = canvas.height;
-      // 90s booth curtain pleats in the background
       const grad = ctx.createLinearGradient(0, 0, 0, h);
       grad.addColorStop(0, '#c8b294');
       grad.addColorStop(1, '#8c7258');
@@ -99,44 +98,37 @@ export default function CameraBoothPage() {
         ctx.fillRect(x, 0, 22, h);
       }
 
-      // Gentle sway for the booth pose silhouette
       const sway = Math.sin(time * 0.002) * 8;
       const cx = w / 2 + sway;
       const cy = h * 0.56;
 
-      // Soft flash glow behind subject
       const flash = ctx.createRadialGradient(cx, cy - 40, 20, cx, cy - 40, w * 0.48);
       flash.addColorStop(0, 'rgba(255, 244, 222, 0.45)');
       flash.addColorStop(1, 'rgba(20, 12, 8, 0.35)');
       ctx.fillStyle = flash;
       ctx.fillRect(0, 0, w, h);
 
-      // Shoulders / top
       ctx.fillStyle = '#f2e8d5';
       ctx.beginPath();
       ctx.ellipse(cx, h * 0.92, 165, 130, 0, Math.PI, 0);
       ctx.fill();
 
-      // Hair back
       ctx.fillStyle = '#251812';
       ctx.beginPath();
       ctx.ellipse(cx, cy - 10, 96, 125, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Face
       ctx.fillStyle = '#dfae8c';
       ctx.beginPath();
       ctx.ellipse(cx, cy - 18, 64, 78, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Curtain bangs
       ctx.fillStyle = '#251812';
       ctx.beginPath();
       ctx.arc(cx - 28, cy - 68, 46, 0.1 * Math.PI, 0.95 * Math.PI);
       ctx.arc(cx + 28, cy - 68, 46, 0.05 * Math.PI, 0.9 * Math.PI);
       ctx.fill();
 
-      // Eyes & 90s lip
       ctx.fillStyle = '#231612';
       ctx.beginPath();
       ctx.ellipse(cx - 22, cy - 22, 7, 4.5, 0, 0, Math.PI * 2);
@@ -165,7 +157,7 @@ export default function CameraBoothPage() {
     setFlashing(true);
     setTimeout(() => setFlashing(false), 260);
 
-    const dataUrl = renderNinetiesPhoto({
+    const dataUrl = renderVintagePhoto({
       source,
       sourceWidth,
       sourceHeight,
@@ -210,7 +202,7 @@ export default function CameraBoothPage() {
     }, 1000);
   };
 
-  // Download a 90s vertical photo strip combining up to 4 recent shots
+  // Download a vertical photo strip combining up to 4 recent shots
   const downloadStrip = () => {
     if (photos.length === 0) return;
     const slice = photos.slice(0, 4).reverse();
@@ -226,7 +218,6 @@ export default function CameraBoothPage() {
       canvas.height = slice.length * (frameH + pad) + pad + bottomPad;
       const ctx = canvas.getContext('2d');
 
-      // Aged 90s cream photobooth paper border
       ctx.fillStyle = '#f3ead8';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -252,7 +243,7 @@ export default function CameraBoothPage() {
             );
             const a = document.createElement('a');
             a.href = canvas.toDataURL('image/jpeg', 0.94);
-            a.download = `booth-90s-strip-${Date.now()}.jpg`;
+            a.download = `booth-strip-${Date.now()}.jpg`;
             a.click();
           }
         };
@@ -265,7 +256,7 @@ export default function CameraBoothPage() {
 
   return (
     <main className="camera-page">
-      {/* Top Bar matching reference screenshot */}
+      {/* Top Bar */}
       <header className="camera-topbar">
         <button type="button" className="back-pill" onClick={() => navigate('/')}>
           ← Back
@@ -296,13 +287,13 @@ export default function CameraBoothPage() {
             }`}
           />
 
-          {/* 90s analog warm lens vignette + subtle film grain overlay */}
+          {/* Subtle optical vignette overlay */}
           <div className="camera-viewport__analog-overlay" aria-hidden="true" />
 
           {/* Flash overlay when photo snaps */}
           {flashing && <div className="camera-viewport__flash" aria-hidden="true" />}
 
-          {/* Stitched pink counter / countdown badge on the right side (like reference) */}
+          {/* Stitched counter / countdown badge on the right side */}
           <div
             className={`camera-badge ${countdown !== null ? 'camera-badge--counting' : ''}`}
             aria-live="polite"
@@ -337,9 +328,9 @@ export default function CameraBoothPage() {
             </div>
           </div>
 
-          {/* 90s Film Option: Colour or B&W */}
-          <div className="control-group" role="group" aria-label="90s film style">
-            <span className="control-group__label">90s FILM</span>
+          {/* Filter Option: Colour or B&W */}
+          <div className="control-group" role="group" aria-label="Filter style">
+            <span className="control-group__label">FILTER</span>
             <div className="control-pills">
               <button
                 type="button"
@@ -404,16 +395,16 @@ export default function CameraBoothPage() {
         </div>
       </section>
 
-      {/* 90s Developed Photos Output Tray */}
+      {/* Developed Photos Output Tray */}
       {photos.length > 0 && (
-        <section className="developed-tray" aria-label="Captured 90s photos">
+        <section className="developed-tray" aria-label="Captured photos">
           <div className="developed-tray__header">
             <h2 className="developed-tray__title">
-              developed 90s prints ({photos.length})
+              developed prints ({photos.length})
             </h2>
             <div className="developed-tray__actions">
               <button type="button" className="tray-btn tray-btn--primary" onClick={downloadStrip}>
-                download 90s strip
+                download strip
               </button>
               <button
                 type="button"
@@ -429,18 +420,18 @@ export default function CameraBoothPage() {
             {photos.map((photo) => (
               <figure
                 key={photo.id}
-                className={`nineties-print nineties-print--${photo.orientation}`}
+                className={`vintage-print vintage-print--${photo.orientation}`}
               >
-                <img src={photo.dataUrl} alt={`90s shot ${photo.shotNumber}`} />
-                <figcaption className="nineties-print__footer">
+                <img src={photo.dataUrl} alt={`Shot ${photo.shotNumber}`} />
+                <figcaption className="vintage-print__footer">
                   <span>
-                    #{photo.shotNumber} · 90s {photo.colorMode === 'bw' ? 'B&W' : 'Colour'} ·{' '}
+                    #{photo.shotNumber} · {photo.colorMode === 'bw' ? 'b&w' : 'colour'} ·{' '}
                     {photo.orientation}
                   </span>
                   <a
                     href={photo.dataUrl}
-                    download={`booth-90s-shot-${photo.shotNumber}.jpg`}
-                    className="nineties-print__dl"
+                    download={`booth-shot-${photo.shotNumber}.jpg`}
+                    className="vintage-print__dl"
                   >
                     save jpg
                   </a>

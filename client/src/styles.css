@@ -1,10 +1,8 @@
 :root {
-  --butter-bg: #faefb8;
-  --butter-light: #fef7cb;
-  --butter-stripe: rgba(224, 202, 132, 0.36);
+  --butter-bg: #fef6cb;
   --rose-pink: #df7ea7;
   --rose-badge: #8d5c6c;
-  --cream-card: #fffdf5;
+  --cream-card: #fffef7;
   --espresso: #26171a;
   --burgundy: #54232e;
   --serif-tall: 'Cormorant Garamond', 'DM Serif Display', Georgia, serif;
@@ -22,15 +20,10 @@ body {
   padding: 0;
   min-height: 100vh;
   background-color: var(--butter-bg);
-  background-image:
-    repeating-linear-gradient(
-      90deg,
-      transparent 0px,
-      transparent 46px,
-      var(--butter-stripe) 46px,
-      var(--butter-stripe) 56px
-    ),
-    radial-gradient(circle at 50% 45%, var(--butter-light) 0%, var(--butter-bg) 100%);
+  /* Subtle wavy bluish horizontal lines on soft butter-yellow paper (like user's reference) */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='56' viewBox='0 0 640 56'%3E%3Cpath d='M0 28 Q 160 25.5, 320 28.5 T 640 27.5' fill='none' stroke='%236c8ead' stroke-width='1.5' stroke-opacity='0.34'/%3E%3C/svg%3E");
+  background-size: 640px 56px;
+  background-repeat: repeat;
   color: var(--espresso);
   font-family: var(--serif-cute);
   -webkit-font-smoothing: antialiased;
@@ -60,15 +53,15 @@ body {
 }
 
 .sketch-flower--top-right {
-  top: 6px;
+  top: 8px;
   right: 18px;
-  width: clamp(190px, 22vw, 290px);
+  width: clamp(200px, 23vw, 310px);
 }
 
 .sketch-flower--bottom-left {
-  bottom: 6px;
+  bottom: 8px;
   left: 16px;
-  width: clamp(145px, 16vw, 210px);
+  width: clamp(150px, 17vw, 225px);
 }
 
 .landing__content {
@@ -103,7 +96,7 @@ body {
 
 /* Bring "B" lower and closer to the camera so it sits right near the top lens "O" */
 .booth-logo__letter--b {
-  margin-bottom: -14px;
+  margin-bottom: -16px;
   position: relative;
   z-index: 2;
 }
@@ -123,12 +116,12 @@ body {
 }
 
 .booth-logo__camera-img {
-  width: clamp(185px, 22vw, 255px);
+  width: clamp(195px, 23vw, 270px);
   height: auto;
   display: block;
 }
 
-/* Right Column: Smaller, clean option buttons without emojis */
+/* Right Column: Squared / normal-edged option buttons without emojis */
 .landing__actions {
   display: flex;
   flex-direction: column;
@@ -138,9 +131,9 @@ body {
 }
 
 .booth-option-btn {
-  width: 240px;
-  padding: 0.62rem 1.4rem 0.68rem;
-  border-radius: 999px;
+  width: 230px;
+  padding: 0.55rem 1.25rem 0.62rem;
+  border-radius: 3px;
   border: 2px solid var(--espresso);
   background: var(--cream-card);
   color: var(--espresso);
@@ -150,23 +143,23 @@ body {
   line-height: 1.1;
   text-align: center;
   cursor: pointer;
-  box-shadow: 0 4px 0 var(--espresso);
+  box-shadow: 3px 3px 0 var(--espresso);
   transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.15s ease;
 }
 
 .booth-option-btn:hover {
-  background: #fff6dc;
-  transform: translateY(-1.5px);
-  box-shadow: 0 5.5px 0 var(--espresso);
+  background: #fff9e2;
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 var(--espresso);
 }
 
 .booth-option-btn:active {
-  transform: translateY(2.5px);
-  box-shadow: 0 1.5px 0 var(--espresso);
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--espresso);
 }
 
 /* ==========================================================================
-   2. CAMERA BOOTH PAGE (/booth) — Inspired by reference screenshot
+   2. CAMERA BOOTH PAGE (/booth)
    ========================================================================== */
 .camera-page {
   min-height: 100vh;
@@ -239,7 +232,7 @@ body {
   width: 100%;
   border-radius: 18px;
   overflow: hidden;
-  background: #231915;
+  background: #1a1412;
   box-shadow:
     0 16px 38px rgba(45, 31, 20, 0.22),
     0 0 0 2px rgba(74, 52, 35, 0.25);
@@ -271,34 +264,25 @@ body {
   display: none;
 }
 
-/* Live 90s filter look on the camera feed */
+/* Live filter look on the camera feed: crisp vintage digicam colour & high-contrast warm B&W */
 .camera-viewport--color .camera-video {
-  filter: contrast(1.12) saturate(0.88) sepia(0.24) brightness(1.03);
+  filter: contrast(1.08) saturate(1.06) sepia(0.08) brightness(1.02);
 }
 
 .camera-viewport--bw .camera-video {
-  filter: grayscale(1) sepia(0.34) contrast(1.32) brightness(1.02);
+  filter: grayscale(1) sepia(0.2) contrast(1.42) brightness(1.02);
 }
 
-/* Warm 90s optical vignette & subtle analog grain over live feed */
+/* Subtle optical vignette over live feed */
 .camera-viewport__analog-overlay {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background:
-    radial-gradient(
-      circle at 50% 46%,
-      rgba(255, 240, 215, 0.1) 0%,
-      rgba(45, 26, 18, 0.22) 64%,
-      rgba(20, 11, 8, 0.62) 100%
-    ),
-    repeating-linear-gradient(
-      0deg,
-      rgba(255, 255, 255, 0.015) 0px,
-      rgba(255, 255, 255, 0.015) 1px,
-      transparent 1px,
-      transparent 3px
-    );
+  background: radial-gradient(
+    circle at 50% 48%,
+    transparent 55%,
+    rgba(18, 12, 9, 0.42) 100%
+  );
 }
 
 .camera-viewport__flash {
@@ -419,7 +403,7 @@ body {
   background: transparent;
 }
 
-/* Segmented pills for TIMER, MODE, and 90s FILM */
+/* Segmented pills for TIMER, MODE, and FILTER */
 .control-group {
   display: flex;
   flex-direction: column;
@@ -442,7 +426,7 @@ body {
 
 .control-pill {
   padding: 0.38rem 0.68rem;
-  border-radius: 8px;
+  border-radius: 6px;
   border: 1.5px solid #d4c69e;
   background: #fdf9e8;
   color: #5b4a39;
@@ -463,7 +447,7 @@ body {
   color: #fffdf8;
 }
 
-/* Developed 90s Prints Tray */
+/* Developed Prints Tray */
 .developed-tray {
   width: 100%;
   max-width: 840px;
@@ -495,7 +479,7 @@ body {
 
 .tray-btn {
   padding: 0.45rem 1rem;
-  border-radius: 999px;
+  border-radius: 4px;
   border: 1.5px solid var(--espresso);
   background: var(--cream-card);
   color: var(--espresso);
@@ -503,7 +487,7 @@ body {
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 2.5px 0 var(--espresso);
+  box-shadow: 2px 2px 0 var(--espresso);
 }
 
 .tray-btn--primary {
@@ -517,25 +501,25 @@ body {
   gap: 1.25rem;
 }
 
-.nineties-print {
+.vintage-print {
   margin: 0;
   padding: 0.65rem 0.65rem 0.75rem;
-  background: #f4ebd9;
-  border-radius: 12px;
+  background: #f5ede0;
+  border-radius: 10px;
   box-shadow: 0 8px 20px rgba(38, 23, 26, 0.16);
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
 }
 
-.nineties-print img {
+.vintage-print img {
   width: 100%;
   height: auto;
   border-radius: 6px;
   display: block;
 }
 
-.nineties-print__footer {
+.vintage-print__footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -543,7 +527,7 @@ body {
   color: #4c3b2c;
 }
 
-.nineties-print__dl {
+.vintage-print__dl {
   color: #9e476e;
   font-weight: 700;
   text-decoration: underline;
