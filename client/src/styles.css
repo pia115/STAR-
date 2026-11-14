@@ -213,6 +213,16 @@ body {
   letter-spacing: 0.03em;
   white-space: nowrap;
   color: var(--rose-pink);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.camera-title__heart {
+  display: inline-block;
+  font-size: 0.92em;
+  line-height: 1;
+  transform: translateY(1px) rotate(-6deg);
 }
 
 .camera-topbar__spacer {
@@ -344,24 +354,49 @@ body {
   gap: 1.25rem;
 }
 
+.camera-fix-btns {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
 .round-icon-btn {
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   border: 1.5px solid #cfc29b;
   background: #fdf9e8;
   color: #7c5e54;
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   display: grid;
   place-items: center;
   cursor: pointer;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
-  transition: transform 0.1s, background 0.15s;
+  transition: transform 0.1s, background 0.15s, border-color 0.15s;
 }
 
 .round-icon-btn:hover {
   background: #fffdf5;
   transform: translateY(-1px);
+}
+
+.round-icon-btn--active {
+  border-color: #d1749c;
+  background: #fcebf2;
+  color: #8b3b5e;
+}
+
+.camera-device-select {
+  max-width: 175px;
+  padding: 0.36rem 0.6rem;
+  border-radius: 6px;
+  border: 1.5px solid #d4c69e;
+  background: #fdf9e8;
+  color: #5b4a39;
+  font-family: inherit;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 /* Pink circular clicker / shutter button */

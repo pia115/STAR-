@@ -9,11 +9,16 @@ export default function CameraBoothPage() {
   const videoRef = useRef(null);
   const fallbackCanvasRef = useRef(null);
   const timerIntervalRef = useRef(null);
+  const activeStreamRef = useRef(null);
 
   const [orientation, setOrientation] = useState('landscape'); // 'landscape' | 'portrait'
   const [colorMode, setColorMode] = useState('color');         // 'color' | 'bw'
   const [timerSeconds, setTimerSeconds] = useState(5);         // 0 | 5 | 10
   const [mirrored, setMirrored] = useState(true);
+  const [flipVertical, setFlipVertical] = useState(false);
+  const [rotation, setRotation] = useState(0);                 // 0 | 90 | 180 | 270
+  const [videoDevices, setVideoDevices] = useState([]);
+  const [selectedDeviceId, setSelectedDeviceId] = useState('');
 
   const [countdown, setCountdown] = useState(null);
   const [flashing, setFlashing] = useState(false);
@@ -24,9 +29,27 @@ export default function CameraBoothPage() {
 
   const isFull = photos.length >= MAX_PHOTOS;
 
-  // Start laptop webcam on mount
+  const stopActiveStream = useCallback(() => {
+    if (activeStreamRef.current) {
+      activeStreamRef.current.getTracks().forEach((t) => t.stop());
+      activeStreamRef.current = null;
+    }
+  }, []);
+
+  const attachStreamToVideo = useCallback(async (stream) => {
+    stopActiveStream();
+    activeStreamRef.current = stream;
+    if (videoRef.current) {
+      videoRef.current.srcObject = stream;
+      await videoRef.current.play().catch(() => {});
+      setCameraReady(true);
+      setUsingFallback(false);
+      setCameraNote('');
+    }
+  }, [stopActiveStream]);
+
+  // Start laptop webcam on mount, preferring built-in FaceTime HD camera over Desk View / Continuity cameras
   useEffect(() => {
-    let activeStream = null;
     let cancelled = false;
 
     async function startCamera() {
@@ -38,28 +61,63 @@ export default function CameraBoothPage() {
       }
 
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
+        // 1. Request initial user-facing stream at standard 720p so macOS doesn't force Continuity / Desk View
+        const initialStream = await navigator.mediaDevices.getUserMedia({
           video: {
-            width: { ideal: 1920 },
-            height: { ideal: 1080 },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
             facingMode: 'user',
           },
           audio: false,
         });
 
         if (cancelled) {
-          stream.getTracks().forEach((t) => t.stop());
+          initialStream.getTracks().forEach((t) => t.stop());
           return;
         }
 
-        activeStream = stream;
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          await videoRef.current.play().catch(() => {});
-          setCameraReady(true);
-          setUsingFallback(false);
-          setCameraNote('');
+        // 2. Enumerate video inputs now that permission is granted
+        const allDevices = await navigator.mediaDevices.enumerateDevices().catch(() => []);
+        const cams = allDevices.filter((d) => d.kind === 'videoinput');
+        setVideoDevices(cams);
+
+        const activeTrack = initialStream.getVideoTracks()[0];
+        const activeLabel = activeTrack?.label || '';
+        const activeSettingsId = activeTrack?.getSettings?.()?.deviceId || '';
+
+        // Check if macOS picked a Desk View / Continuity / virtual camera while a built-in FaceTime camera exists
+        const builtInCam = cams.find(
+          (c) =>
+            /facetime|built-in|internal/i.test(c.label) &&
+            !/desk view|virtual/i.test(c.label),
+        );
+        const isCurrentAwkward = /desk view|continuity|obs|virtual/i.test(activeLabel);
+
+        if (builtInCam && (isCurrentAwkward || (builtInCam.deviceId && builtInCam.deviceId !== activeSettingsId && /continuity/i.test(activeLabel)))) {
+          try {
+            const preferredStream = await navigator.mediaDevices.getUserMedia({
+              video: {
+                deviceId: { exact: builtInCam.deviceId },
+                width: { ideal: 1280 },
+                height: { ideal: 720 },
+              },
+              audio: false,
+            });
+            initialStream.getTracks().forEach((t) => t.stop());
+            if (cancelled) {
+              preferredStream.getTracks().forEach((t) => t.stop());
+              return;
+            }
+            setSelectedDeviceId(builtInCam.deviceId);
+            await attachStreamToVideo(preferredStream);
+            return;
+          } catch {
+            // Fall back to initialStream if switching fails
+          }
         }
+
+        setSelectedDeviceId(activeSettingsId || cams[0]?.deviceId || '');
+        await attachStreamToVideo(initialStream);
       } catch {
         if (!cancelled) {
           setUsingFallback(true);
@@ -74,11 +132,30 @@ export default function CameraBoothPage() {
     return () => {
       cancelled = true;
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-      if (activeStream) {
-        activeStream.getTracks().forEach((t) => t.stop());
-      }
+      stopActiveStream();
     };
-  }, []);
+  }, [attachStreamToVideo, stopActiveStream]);
+
+  // Switch camera when user selects a different video input device
+  const handleDeviceChange = async (e) => {
+    const nextDeviceId = e.target.value;
+    setSelectedDeviceId(nextDeviceId);
+    if (!nextDeviceId || !navigator.mediaDevices?.getUserMedia) return;
+
+    try {
+      const nextStream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          deviceId: { exact: nextDeviceId },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+        audio: false,
+      });
+      await attachStreamToVideo(nextStream);
+    } catch {
+      setCameraNote('Could not switch to that camera.');
+    }
+  };
 
   // Draw an animated vintage photobooth curtain + subject if no physical webcam is connected
   useEffect(() => {
@@ -170,6 +247,8 @@ export default function CameraBoothPage() {
         orientation,
         colorMode,
         mirrored,
+        flipVertical,
+        rotation,
       });
 
       return [
@@ -183,7 +262,7 @@ export default function CameraBoothPage() {
         },
       ];
     });
-  }, [usingFallback, orientation, colorMode, mirrored]);
+  }, [usingFallback, orientation, colorMode, mirrored, flipVertical, rotation]);
 
   const handleClicker = () => {
     if (countdown !== null || isFull) return;
@@ -266,6 +345,13 @@ export default function CameraBoothPage() {
   const badgeValue =
     countdown !== null ? countdown : `${Math.min(photos.length + (isFull ? 0 : 1), MAX_PHOTOS)}/${MAX_PHOTOS}`;
 
+  // Build live CSS transform so rotation, horizontal mirror, and vertical flip match the output canvas
+  const isSideways = rotation === 90 || rotation === 270;
+  const videoTransform = [
+    `rotate(${rotation}deg)`,
+    `scale(${(mirrored ? -1 : 1) * (isSideways ? 1.35 : 1)}, ${(flipVertical ? -1 : 1) * (isSideways ? 1.35 : 1)})`,
+  ].join(' ');
+
   return (
     <main className="camera-page">
       {/* Top Bar */}
@@ -273,7 +359,12 @@ export default function CameraBoothPage() {
         <button type="button" className="back-pill" onClick={() => navigate('/')}>
           ← Back
         </button>
-        <h1 className="camera-title">hey beautiful</h1>
+        <h1 className="camera-title">
+          hey beautiful{' '}
+          <span className="camera-title__heart" aria-hidden="true">
+            ♡
+          </span>
+        </h1>
         <div className="camera-topbar__spacer" />
       </header>
 
@@ -286,17 +377,15 @@ export default function CameraBoothPage() {
             ref={videoRef}
             playsInline
             muted
-            className={`camera-video ${mirrored ? 'camera-video--mirrored' : ''} ${
-              usingFallback ? 'camera-video--hidden' : ''
-            }`}
+            style={{ transform: videoTransform }}
+            className={`camera-video ${usingFallback ? 'camera-video--hidden' : ''}`}
           />
           <canvas
             ref={fallbackCanvasRef}
             width={960}
             height={720}
-            className={`camera-video ${mirrored ? 'camera-video--mirrored' : ''} ${
-              usingFallback ? '' : 'camera-video--hidden'
-            }`}
+            style={{ transform: videoTransform }}
+            className={`camera-video ${usingFallback ? '' : 'camera-video--hidden'}`}
           />
 
           {/* Subtle optical vignette overlay */}
@@ -367,16 +456,36 @@ export default function CameraBoothPage() {
             </div>
           </div>
 
-          {/* Mirror flip button */}
-          <button
-            type="button"
-            className="round-icon-btn"
-            onClick={() => setMirrored((m) => !m)}
-            title="Flip mirror"
-            aria-label="Flip mirror"
-          >
-            ⇄
-          </button>
+          {/* Orientation fixers: Mirror horizontal, Flip vertical, Rotate 90° */}
+          <div className="camera-fix-btns" role="group" aria-label="Camera alignment controls">
+            <button
+              type="button"
+              className={`round-icon-btn ${mirrored ? 'round-icon-btn--active' : ''}`}
+              onClick={() => setMirrored((m) => !m)}
+              title="Mirror left/right"
+              aria-label="Mirror left/right"
+            >
+              ⇄
+            </button>
+            <button
+              type="button"
+              className={`round-icon-btn ${flipVertical ? 'round-icon-btn--active' : ''}`}
+              onClick={() => setFlipVertical((f) => !f)}
+              title="Flip upside-down camera"
+              aria-label="Flip upside-down camera"
+            >
+              ⇅
+            </button>
+            <button
+              type="button"
+              className={`round-icon-btn ${rotation !== 0 ? 'round-icon-btn--active' : ''}`}
+              onClick={() => setRotation((r) => (r + 90) % 360)}
+              title="Rotate camera 90°"
+              aria-label="Rotate camera 90 degrees"
+            >
+              ↻
+            </button>
+          </div>
 
           {/* Center Pink Clicker / Shutter Button */}
           <button
@@ -410,6 +519,25 @@ export default function CameraBoothPage() {
               ))}
             </div>
           </div>
+
+          {/* Camera device switcher if laptop has multiple cameras (e.g. FaceTime vs iPhone Continuity) */}
+          {videoDevices.length > 1 && (
+            <div className="control-group" role="group" aria-label="Select camera">
+              <span className="control-group__label">CAMERA</span>
+              <select
+                className="camera-device-select"
+                value={selectedDeviceId}
+                onChange={handleDeviceChange}
+                aria-label="Choose camera lens"
+              >
+                {videoDevices.map((dev, idx) => (
+                  <option key={dev.deviceId || idx} value={dev.deviceId}>
+                    {dev.label || `Camera ${idx + 1}`}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
       </section>
 

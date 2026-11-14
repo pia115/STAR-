@@ -12,38 +12,56 @@ export function renderVintagePhoto({
   orientation = 'landscape', // 'landscape' | 'portrait'
   colorMode = 'bw',          // 'bw' | 'color'
   mirrored = true,
+  flipVertical = false,
+  rotation = 0,              // 0 | 90 | 180 | 270
 }) {
   const targetWidth = orientation === 'portrait' ? 720 : 960;
   const targetHeight = orientation === 'portrait' ? 960 : 720;
+
+  // Step 0: Normalize source orientation onto an upright intermediate canvas
+  const rot = ((rotation % 360) + 360) % 360;
+  const isSideways = rot === 90 || rot === 270;
+  const normW = isSideways ? sourceHeight : sourceWidth;
+  const normH = isSideways ? sourceWidth : sourceHeight;
+
+  const normCanvas = document.createElement('canvas');
+  normCanvas.width = normW;
+  normCanvas.height = normH;
+  const nctx = normCanvas.getContext('2d');
+
+  nctx.save();
+  nctx.translate(normW / 2, normH / 2);
+  if (rot !== 0) {
+    nctx.rotate((rot * Math.PI) / 180);
+  }
+  const scaleX = mirrored ? -1 : 1;
+  const scaleY = flipVertical ? -1 : 1;
+  nctx.scale(scaleX, scaleY);
+  nctx.drawImage(source, -sourceWidth / 2, -sourceHeight / 2, sourceWidth, sourceHeight);
+  nctx.restore();
 
   const canvas = document.createElement('canvas');
   canvas.width = targetWidth;
   canvas.height = targetHeight;
   const ctx = canvas.getContext('2d');
 
-  // 1. Center-crop source to target aspect ratio
+  // 1. Center-crop normalized source to target aspect ratio
   const targetAspect = targetWidth / targetHeight;
-  const srcAspect = sourceWidth / sourceHeight;
+  const srcAspect = normW / normH;
   let sx = 0;
   let sy = 0;
-  let sw = sourceWidth;
-  let sh = sourceHeight;
+  let sw = normW;
+  let sh = normH;
 
   if (srcAspect > targetAspect) {
-    sw = sourceHeight * targetAspect;
-    sx = (sourceWidth - sw) / 2;
+    sw = normH * targetAspect;
+    sx = (normW - sw) / 2;
   } else {
-    sh = sourceWidth / targetAspect;
-    sy = (sourceHeight - sh) / 2;
+    sh = normW / targetAspect;
+    sy = (normH - sh) / 2;
   }
 
-  ctx.save();
-  if (mirrored) {
-    ctx.translate(targetWidth, 0);
-    ctx.scale(-1, 1);
-  }
-  ctx.drawImage(source, sx, sy, sw, sh, 0, 0, targetWidth, targetHeight);
-  ctx.restore();
+  ctx.drawImage(normCanvas, sx, sy, sw, sh, 0, 0, targetWidth, targetHeight);
 
   // 2. Subtle highlight glow (very light so faces stay sharp and clear)
   const bloomCanvas = document.createElement('canvas');
@@ -80,18 +98,12 @@ export function renderVintagePhoto({
       const distSq = dx * dx + dy * dy;
 
       if (colorMode === 'bw') {
-        // High-contrast vintage photobooth B&W (inspired by Pinterest curtain booth strips)
         const vignette = Math.max(0.38, 1 - Math.pow(distSq, 1.05) * 0.56);
-
-        // Panchromatic luminance (flattering on skin tones)
         let lum = (0.34 * r + 0.54 * g + 0.12 * b) / 255;
 
-        // Strong S-curve contrast for deep rich blacks and bright creamy highlights
         lum = 1 / (1 + Math.exp(-7.8 * (lum - 0.46)));
         lum = Math.min(1, Math.max(0, lum * vignette));
 
-        // Warm silver-gelatin tone mapping:
-        // Deep espresso-black shadows -> warm sepia-taupe midtones -> creamy ivory highlights
         const shadowR = 12, shadowG = 10, shadowB = 8;
         const midR = 138, midG = 122, midB = 103;
         const highR = 250, highG = 244, highB = 230;
@@ -108,19 +120,15 @@ export function renderVintagePhoto({
           b = midB + (highB - midB) * t;
         }
 
-        // Very subtle fine silver grain (never noisy or dusty)
         const grain = (Math.random() - 0.5) * 5.5;
         d[idx] = Math.max(0, Math.min(255, r + grain));
         d[idx + 1] = Math.max(0, Math.min(255, g + grain * 0.95));
         d[idx + 2] = Math.max(0, Math.min(255, b + grain * 0.9));
       } else {
-        // Cute vintage digicam / warm film colour:
-        // Clean, crisp contrast, natural warm golden skin tones, subtle vignette
         const vignette = Math.max(0.68, 1 - Math.pow(distSq, 1.15) * 0.32);
 
         const contrastCurve = (v) => {
           const n = v / 255;
-          // Gentle crisp digicam S-curve
           const c = 1 / (1 + Math.exp(-4.6 * (n - 0.49)));
           const minC = 1 / (1 + Math.exp(4.6 * 0.49));
           const maxC = 1 / (1 + Math.exp(-4.6 * 0.51));
@@ -131,7 +139,6 @@ export function renderVintagePhoto({
         g = contrastCurve(g);
         b = contrastCurve(b);
 
-        // Slight saturation boost + warm vintage digicam color balance
         const avg = 0.299 * r + 0.587 * g + 0.114 * b;
         r = avg + (r - avg) * 1.08 + 6;
         g = avg + (g - avg) * 1.04 + 2;
@@ -141,7 +148,6 @@ export function renderVintagePhoto({
         g *= vignette;
         b *= vignette;
 
-        // Barely-there digicam sensor texture
         const grain = (Math.random() - 0.5) * 3.5;
         d[idx] = Math.max(0, Math.min(255, r + grain));
         d[idx + 1] = Math.max(0, Math.min(255, g + grain));

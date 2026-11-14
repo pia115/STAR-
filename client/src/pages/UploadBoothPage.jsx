@@ -223,9 +223,9 @@ export default function UploadBoothPage({
         <h1 className="camera-title">Upload Your Photos</h1>
       </header>
 
-      {/* Privacy & 4-photo limit info */}
+      {/* 4-photo limit info */}
       <p className="upload-privacy-note">
-        🔒 Processed privately on your device (location &amp; EXIF metadata stripped automatically) · Max {MAX_PHOTOS} photos at a time
+        4 photos at a time maximum
       </p>
 
       {/* Disclaimer alert when user tries to upload more than 4 photos */}

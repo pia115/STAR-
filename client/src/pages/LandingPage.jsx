@@ -57,18 +57,13 @@ export default function LandingPage({ onTriggerLibraryPicker }) {
             take a photo!
           </button>
 
-          <div className="landing__upload-group">
-            <button
-              type="button"
-              className="booth-option-btn"
-              onClick={handleUploadClick}
-            >
-              upload photos
-            </button>
-            <span className="landing__upload-disclaimer">
-              * max 4 pictures at a time
-            </span>
-          </div>
+          <button
+            type="button"
+            className="booth-option-btn"
+            onClick={handleUploadClick}
+          >
+            upload photos
+          </button>
         </section>
       </div>
     </main>
